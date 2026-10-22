@@ -1,0 +1,7 @@
+# Aplicação testada: código da Testsmith (https://github.com/testsmith-io/practice-software-testing),
+# usado apenas como referência e para execução local via Docker. Não faz parte deste repositório.
+practice-software-testing/
+
+.DS_Store
+node_modules/
+.env

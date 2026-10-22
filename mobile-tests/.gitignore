@@ -1,0 +1,7 @@
+node_modules/
+.appium/
+apps/
+allure-results/
+allure-report/
+logs/
+.env

@@ -1,0 +1,24 @@
+{
+  "name": "toolshop-e2e-bdd",
+  "version": "1.0.0",
+  "description": "Testes E2E em BDD (Gherkin em português) com Playwright + playwright-bdd para a aplicação Practice Software Testing (Toolshop)",
+  "private": true,
+  "scripts": {
+    "bddgen": "bddgen",
+    "test": "bddgen && playwright test",
+    "test:login": "bddgen && playwright test --grep @login",
+    "test:checkout": "bddgen && playwright test --grep @checkout",
+    "test:smoke": "bddgen && playwright test --grep @smoke",
+    "test:headed": "bddgen && playwright test --headed --workers=1",
+    "report": "playwright show-report reports/playwright",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "dotenv": "^18.0.9",
+    "playwright-bdd": "^9.2.1",
+    "typescript": "^7.0.2"
+  }
+}

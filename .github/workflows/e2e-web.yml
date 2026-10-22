@@ -1,0 +1,34 @@
+name: E2E web (Playwright + BDD)
+
+on:
+  push:
+    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml']
+  pull_request:
+    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: e2e-tests
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e-tests/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Publicar relatórios
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-e2e-web
+          path: e2e-tests/reports/
+          retention-days: 14
