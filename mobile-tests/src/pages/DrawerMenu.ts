@@ -24,11 +24,12 @@ export class DrawerMenu extends BaseScreen {
   }
 
   /** Os itens do menu mudam com o login: visitante vê "Sign In"; usuário autenticado vê a saudação. */
-  async waitForOpen(): Promise<void> {
-    await driver.waitUntil(
-      async () => (await this.signInItem.isDisplayed()) || (await this.welcomeMessage.isDisplayed()),
-      { timeoutMsg: 'Menu lateral não abriu' },
-    );
+  async isOpen(timeout: number): Promise<boolean> {
+    return driver
+      .waitUntil(async () => (await this.signInItem.isDisplayed()) || (await this.welcomeMessage.isDisplayed()), {
+        timeout,
+      })
+      .catch(() => false);
   }
 
   async goToSignIn(): Promise<void> {

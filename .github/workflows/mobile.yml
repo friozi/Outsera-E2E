@@ -1,0 +1,115 @@
+name: Mobile (Appium) - Android no BrowserStack + iOS no simulador
+
+on:
+  push:
+    paths: ['mobile-tests/**', '.github/workflows/mobile.yml']
+  pull_request:
+    paths: ['mobile-tests/**', '.github/workflows/mobile.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mobile-tests
+
+jobs:
+  android-browserstack:
+    name: Android (BrowserStack - dispositivo real)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile-tests/package-lock.json
+      - run: npm ci
+      - run: ./scripts/download-apps.sh android
+      - run: npm run test:browserstack:android
+      - name: Publicar resultados Allure (Android)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-android
+          path: mobile-tests/allure-results/
+          retention-days: 14
+
+  ios-simulator:
+    name: iOS (simulador no runner macOS)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile-tests/package-lock.json
+      - run: npm ci
+      - name: Instalar driver XCUITest do Appium
+        run: APPIUM_HOME=.appium npx appium driver install xcuitest
+      - run: ./scripts/download-apps.sh ios
+      - name: Escolher e ligar um simulador de iPhone
+        # As versões de iOS disponíveis variam com a imagem do runner: usa a mais recente instalada.
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last')
+          IOS_VERSION=$(echo "$RUNTIME" | jq -r '.version')
+          RUNTIME_ID=$(echo "$RUNTIME" | jq -r '.identifier')
+          IOS_DEVICE=$(xcrun simctl list devices available -j \
+            | jq -r --arg rt "$RUNTIME_ID" '.devices[$rt][] | select(.name | startswith("iPhone")) | .name' \
+            | grep -m1 -E 'Pro$' || true)
+          if [ -z "$IOS_DEVICE" ]; then
+            IOS_DEVICE=$(xcrun simctl list devices available -j \
+              | jq -r --arg rt "$RUNTIME_ID" '[.devices[$rt][] | select(.name | startswith("iPhone"))][0].name')
+          fi
+          echo "Simulador: $IOS_DEVICE (iOS $IOS_VERSION)"
+          echo "IOS_VERSION=$IOS_VERSION" >> "$GITHUB_ENV"
+          echo "IOS_DEVICE=$IOS_DEVICE" >> "$GITHUB_ENV"
+          xcrun simctl boot "$IOS_DEVICE" || true
+          xcrun simctl bootstatus "$IOS_DEVICE" -b
+      - run: npm run test:ios
+      - name: Publicar resultados Allure (iOS)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-ios
+          path: mobile-tests/allure-results/
+          retention-days: 14
+
+  relatorio:
+    name: Relatório Allure (Android + iOS)
+    needs: [android-browserstack, ios-simulator]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile-tests/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Baixar resultados das duas plataformas
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: mobile-tests/allure-results
+          merge-multiple: true
+      - run: npm run allure:generate
+      - name: Publicar relatório Allure combinado
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-allure-mobile
+          path: mobile-tests/allure-report/
+          retention-days: 14

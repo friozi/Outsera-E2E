@@ -1,4 +1,5 @@
 import { test as base, createBdd } from 'playwright-bdd';
+import * as allure from 'allure-js-commons';
 import {
   CartPage,
   CheckoutAddressStep,
@@ -52,7 +53,28 @@ export const test = base.extend<Fixtures>({
   paymentStep: async ({ page }, use) => use(new CheckoutPaymentStep(page)),
 });
 
-export const { Given, When, Then, AfterStep } = createBdd(test);
+export const { Given, When, Then, AfterStep, BeforeScenario } = createBdd(test);
+
+const REPO_URL = 'https://github.com/friozi/Outsera-E2E/tree/main/e2e-tests';
+
+/**
+ * Classificação no Allure a partir das tags do Gherkin:
+ * aba "Behaviors" (épico > funcionalidade > cenário), severidade e vínculo dos cenários
+ * que expõem defeitos (@bug-NN) com a descrição do defeito no README.
+ */
+BeforeScenario(async ({ $tags, $testInfo }) => {
+  await allure.epic('E2E web - Toolshop');
+  await allure.feature($testInfo.titlePath[1] ?? 'Geral');
+  await allure.story($testInfo.title);
+
+  const critico = $tags.some((t) => ['@smoke', '@seguranca'].includes(t));
+  await allure.severity(critico ? allure.Severity.CRITICAL : allure.Severity.NORMAL);
+
+  for (const tag of $tags) {
+    const bug = tag.match(/^@bug-(\d+)$/);
+    if (bug) await allure.issue(`${REPO_URL}#defeitos-encontrados`, `BUG-${bug[1]}`);
+  }
+});
 
 /**
  * Evidência por passo: anexa um screenshot ao final de cada step do Gherkin.

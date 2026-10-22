@@ -6,7 +6,17 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node", "mocha", "@wdio/globals/types", "@wdio/mocha-framework"]
+    "types": [
+      "node",
+      "mocha",
+      "@wdio/globals/types",
+      "@wdio/mocha-framework"
+    ]
   },
-  "include": ["config/**/*.ts", "src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "config/**/*.ts",
+    "scripts/**/*.ts",
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ]
 }

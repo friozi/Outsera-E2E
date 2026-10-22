@@ -1,29 +1,32 @@
 import path from 'node:path';
-import { APPS_DIR, sharedConfig, platformConfig } from './wdio.shared.conf';
+import { APPS_DIR, combine, reportEnvironment, sharedConfig } from './wdio.shared.conf';
+import { LOCAL_APPIUM_VERSION, localAppium } from './local-appium';
 
-export const config: WebdriverIO.Config = {
-  ...sharedConfig,
-  ...platformConfig({
-    port: 4723,
-    environment: {
-      Plataforma: 'Android',
-      Dispositivo: process.env.ANDROID_DEVICE ?? 'Android Emulator',
-      Driver: 'UiAutomator2',
-      App: 'practice-software-testing.apk (io.testsmith.practicesoftwaretesting)',
-    },
+/** Android local: emulador ou dispositivo conectado nesta máquina. */
+export const config = combine(
+  sharedConfig,
+  localAppium(4723),
+  reportEnvironment({
+    Plataforma: 'Android',
+    Execução: `Local (Appium ${LOCAL_APPIUM_VERSION})`,
+    Dispositivo: process.env.ANDROID_DEVICE ?? 'Android Emulator',
+    Driver: 'UiAutomator2',
+    App: 'practice-software-testing.apk (io.testsmith.practicesoftwaretesting)',
   }),
-  capabilities: [
-    {
-      platformName: 'Android',
-      'appium:automationName': 'UiAutomator2',
-      'appium:deviceName': process.env.ANDROID_DEVICE ?? 'Android Emulator',
-      'appium:avd': process.env.ANDROID_AVD, // opcional: inicia o emulador automaticamente
-      'appium:app': path.join(APPS_DIR, 'practice-software-testing.apk'),
-      'appium:appPackage': 'io.testsmith.practicesoftwaretesting',
-      'appium:appActivity': '.MainActivity',
-      'appium:autoGrantPermissions': true,
-      'appium:newCommandTimeout': 240,
-      'appium:avdLaunchTimeout': 180_000,
-    },
-  ],
-};
+  {
+    capabilities: [
+      {
+        platformName: 'Android',
+        'appium:automationName': 'UiAutomator2',
+        'appium:deviceName': process.env.ANDROID_DEVICE ?? 'Android Emulator',
+        'appium:avd': process.env.ANDROID_AVD, // opcional: inicia o emulador automaticamente
+        'appium:app': path.join(APPS_DIR, 'practice-software-testing.apk'),
+        'appium:appPackage': 'io.testsmith.practicesoftwaretesting',
+        'appium:appActivity': '.MainActivity',
+        'appium:autoGrantPermissions': true,
+        'appium:newCommandTimeout': 240,
+        'appium:avdLaunchTimeout': 180_000,
+      },
+    ],
+  },
+);

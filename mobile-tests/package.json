@@ -10,7 +10,9 @@
     "test:ios": "wdio run config/wdio.ios.conf.ts",
     "test": "./scripts/test-all.sh",
     "report": "allure open allure-report",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:browserstack:android": "wdio run config/wdio.browserstack.android.conf.ts",
+    "allure:generate": "tsx scripts/allure-report.ts"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,7 @@
     "@wdio/spec-reporter": "^10.1.0",
     "allure-commandline": "^2.46.1",
     "appium": "^3.8.0",
+    "dotenv": "^18.0.9",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "webdriverio": "^10.1.0"

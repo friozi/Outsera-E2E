@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig, cucumberReporter } from 'playwright-bdd';
 import 'dotenv/config';
+import os from 'node:os';
 
 const testDir = defineBddConfig({
   features: 'features/**/*.feature',
@@ -32,6 +33,26 @@ export default defineConfig({
     cucumberReporter('html', { outputFile: 'reports/cucumber/index.html', skipAttachments: false }),
     cucumberReporter('json', { outputFile: 'reports/cucumber/report.json' }),
     cucumberReporter('junit', { outputFile: 'reports/cucumber/junit.xml' }),
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'reports/allure-results',
+        // Os passos do Gherkin já viram passos no Allure; o detalhamento interno do Playwright só poluiria.
+        detail: false,
+        suiteTitle: true,
+        environmentInfo: {
+          Aplicação: process.env.BASE_URL ?? 'https://practicesoftwaretesting.com',
+          API: process.env.API_URL ?? 'https://api.practicesoftwaretesting.com',
+          Navegadores: process.env.ALL_BROWSERS ? 'Chromium, Firefox, WebKit' : 'Chromium',
+          'Node.js': process.version,
+          SO: `${os.type()} ${os.release()}`,
+        },
+        categories: [
+          { name: 'Defeitos da aplicação', matchedStatuses: ['failed'] },
+          { name: 'Problemas de teste/ambiente', matchedStatuses: ['broken'] },
+        ],
+      },
+    ],
   ],
   use: {
     baseURL: process.env.BASE_URL ?? 'https://practicesoftwaretesting.com',

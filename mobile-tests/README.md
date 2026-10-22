@@ -8,6 +8,7 @@ Testes automatizados do app mobile do [Practice Software Testing](https://github
 | Cliente e runner | **WebdriverIO 10** + **Mocha**, em TypeScript |
 | Organização | **Page Object Model** (uma classe por tela) |
 | Relatório | **Allure**, com passos, screenshot por passo e ambiente das duas plataformas |
+| Execução | Local (emulador/simulador), **BrowserStack App Automate** (Android em dispositivo real) e **GitHub Actions** |
 
 | Tarefa | Spec | O que cobre |
 |---|---|---|
@@ -20,8 +21,10 @@ Testes automatizados do app mobile do [Practice Software Testing](https://github
 
 | Plataforma | Dispositivo | Passaram | Falharam |
 |---|---|---|---|
-| Android | Emulador Pixel 9, Android 16 | 9 | 1 (BUG-M01) |
-| iOS | Simulador iPhone 16 Pro, iOS 18.6 | 9 | 1 (BUG-M01) |
+| Android (local) | Emulador Pixel 9, Android 16 | 9 | 1 (BUG-M01) |
+| Android (BrowserStack) | **Google Pixel 8 real**, Android 14 | 9 | 1 (BUG-M01) |
+| iOS (local) | Simulador iPhone 16 Pro, iOS 18.6 | 9 | 1 (BUG-M01) |
+| iOS (local) | Simulador iPhone 17 Pro, iOS 26.5 | 9 | 1 (BUG-M01) |
 
 A única falha é **intencional**: o teste descreve o comportamento correto e falha porque o app tem um defeito (veja [Defeitos e observações](#defeitos-e-observações)).
 
@@ -57,6 +60,7 @@ Com um emulador Android ligado e/ou o simulador iOS disponível:
 | `npm test` | Android + iOS, gerando **um único relatório** com as duas plataformas |
 | `npm run test:android` | Somente Android |
 | `npm run test:ios` | Somente iOS. A primeira execução compila o WebDriverAgent (alguns minutos) |
+| `npm run test:browserstack:android` | Android em dispositivo real no **BrowserStack** (veja abaixo) |
 | `npm run report` | Abre o relatório Allure no navegador |
 | `npx wdio run config/wdio.android.conf.ts --spec test/specs/contact.spec.ts` | Um arquivo de teste específico |
 
@@ -70,13 +74,49 @@ Variáveis opcionais:
 | `IOS_VERSION` | Versão do iOS. Padrão: `18.6` |
 | `API_URL` | URL da API usada no setup |
 
+### BrowserStack (Android em dispositivo real)
+
+1. Copie `.env.example` para `.env` e preencha `BROWSERSTACK_USERNAME` e `BROWSERSTACK_ACCESS_KEY`. O `.env` está no `.gitignore`.
+2. Rode `npm run apps:download` e depois `npm run test:browserstack:android`.
+
+O que a execução faz:
+- **Envia o APK** pela API do App Automate e usa a referência `bs://...` retornada. Para reaproveitar um upload, informe `BROWSERSTACK_APP_URL`.
+- **Dá nome a cada sessão** pelo arquivo de teste (`login`, `contact`) e marca a sessão como **passed** ou **failed** no painel do BrowserStack.
+- **Coloca no Allure um link** para a sessão no BrowserStack, com vídeo, logs do Appium, do dispositivo e de rede, e capturas automáticas.
+
+| Variável | Padrão |
+|---|---|
+| `BROWSERSTACK_DEVICE` | `Google Pixel 8` |
+| `BROWSERSTACK_OS_VERSION` | `14.0` |
+| `BROWSERSTACK_APPIUM_VERSION` | `3.5.2`. Precisa ser 3.x: a versão padrão do BrowserStack é a 1.22, sem os comandos `mobile:` usados aqui |
+| `BROWSERSTACK_BUILD_NAME` | Data/hora local, ou número da execução no CI |
+
+> **Por que o iOS não roda no BrowserStack?** O build oficial do app iOS é **somente para simulador** (`CFBundleSupportedPlatforms = iPhoneSimulator`, sem perfil de provisionamento). O App Automate roda iOS apenas em aparelhos reais e exige um `.ipa` assinado. Por isso o iOS roda em simulador: localmente ou no runner macOS do GitHub Actions.
+
+> O serviço oficial `@wdio/browserstack-service` ainda não suporta o WebdriverIO 10. Por isso a integração é feita direto pela API REST e pelo hub W3C ([`config/browserstack.ts`](config/browserstack.ts)).
+
+### GitHub Actions
+
+O workflow [`.github/workflows/mobile.yml`](../.github/workflows/mobile.yml) tem três jobs:
+
+| Job | Onde roda |
+|---|---|
+| Android | BrowserStack, dispositivo real (runner Ubuntu) |
+| iOS | Simulador no runner `macos-15`, escolhendo o iPhone e o iOS mais recentes da imagem |
+| Relatório | Junta os resultados das duas plataformas em **um único relatório Allure**, publicado como artefato `relatorio-allure-mobile` |
+
+As credenciais do BrowserStack vêm dos *secrets* do repositório, `BROWSERSTACK_USERNAME` e `BROWSERSTACK_ACCESS_KEY` (*Settings → Secrets and variables → Actions*).
+
 ---
 
 ## Estrutura
 
 ```
 config/
-  wdio.shared.conf.ts     # runner, Mocha, Allure, ciclo de vida do Appium, evidências
+  wdio.shared.conf.ts     # runner, Mocha, Allure, evidências e combinação de configs/hooks
+  local-appium.ts         # ciclo de vida do Appium local (porta própria, encerramento, órfãos)
+  browserstack.ts         # integração com o BrowserStack (upload, nome/status da sessão, link no Allure)
+  wdio.browserstack.android.conf.ts  # Android em dispositivo real no BrowserStack
   wdio.android.conf.ts    # capabilities Android (UiAutomator2) + porta 4723
   wdio.ios.conf.ts        # capabilities iOS (XCUITest) + porta 4724
 src/
@@ -121,6 +161,8 @@ Não há XPath, coordenadas fixas nem esperas fixas (`pause`) na suíte.
 | iOS: crash do app ao consultar a árvore de acessibilidade com o PickerWheel na tela (OBS-05) | O teste aguarda a roleta estabilizar no valor escolhido e não faz consultas da árvore inteira nessa tela. Depois da correção, 4 execuções seguidas sem crash |
 | `testID` repetido por item de lista (os cards de produto) | Acesso explícito por índice. O WebdriverIO 10 recusa seletores ambíguos (*strict selectors*), o que evita interagir com o elemento errado |
 | Appium de uma execução anterior ainda segurando a porta | Cada plataforma tem a sua porta. A configuração encerra o Appium do projeto ao final e libera uma porta presa antes de começar |
+| Toque ignorado durante a transição de tela (visto no iOS 26, logo após o login) | `openMenu()` confirma que o menu abriu e repete o toque se necessário. A espera é por estado, não por tempo fixo |
+| Instabilidade momentânea do ambiente público: o login recusado chegou a mostrar "Login failed" (erro genérico) em vez de "Unauthorized" | 1 nova tentativa por teste (`mochaOpts.retries`), a mesma política do projeto web. No Allure fica o histórico de tentativas, então a instabilidade continua visível |
 | Falha na coleta de evidências (ex.: app caiu) | É tratada sem esconder o erro original do teste |
 
 ---

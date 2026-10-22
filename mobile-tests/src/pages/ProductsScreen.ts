@@ -25,10 +25,20 @@ export class ProductsScreen extends BaseScreen {
     await this.all('product-title')[0].waitForDisplayed();
   }
 
+  /**
+   * Logo após uma navegação (ex.: retorno do login) o botão já aparece, mas a tela ainda está em
+   * transição e o iOS pode ignorar o toque. Por isso o toque é confirmado pela abertura do menu e
+   * repetido se necessário.
+   */
   async openMenu(): Promise<DrawerMenu> {
-    await this.menuButton.click();
     const menu = new DrawerMenu();
-    await menu.waitForOpen();
+    await driver.waitUntil(
+      async () => {
+        await this.menuButton.click();
+        return menu.isOpen(3_000);
+      },
+      { timeout: 20_000, interval: 500, timeoutMsg: 'Menu lateral não abriu' },
+    );
     return menu;
   }
 

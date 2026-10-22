@@ -57,7 +57,7 @@ Funcionalidade: Checkout de compra
   # Defeito (BUG-01): o titular "Ana 123" é rejeitado pela validação (botão desabilitado),
   # mas a tela exibe uma caixa de erro vazia, pois o template só mostra o texto para o erro "required"
   # enquanto o campo valida apenas "pattern".
-  @negativo
+  @negativo @bug-01
   Cenário: Titular do cartão com números deve informar o motivo da recusa
     Dado que estou na etapa de pagamento do checkout
     Quando eu preencho o cartão com número "4111-1111-1111-1111", validade "12/2030", CVV "123" e titular "Ana 123"
@@ -81,7 +81,7 @@ Funcionalidade: Checkout de compra
   # Defeito (BUG-02): ao deixar um campo obrigatório do endereço em branco o botão de avançar
   # é desabilitado, mas o campo não recebe destaque visual (classe "is-invalid" do Bootstrap),
   # então o cliente não sabe qual informação está faltando.
-  @negativo
+  @negativo @bug-02
   Cenário: Campo obrigatório do endereço em branco deve ser destacado para o cliente
     Dado que estou na etapa de endereço de cobrança do checkout
     Quando eu preencho o endereço de cobrança deixando o campo "rua" em branco
@@ -91,7 +91,7 @@ Funcionalidade: Checkout de compra
   # Defeito (BUG-03): o backend recusa o pedido (HTTP 422) quando a cidade não corresponde
   # ao CEP informado, porém a tela ignora o erro ao confirmar: nenhuma mensagem é exibida e o cliente
   # fica parado na etapa de pagamento sem saber o motivo.
-  @negativo
+  @negativo @bug-03
   Cenário: Pedido com cidade divergente do CEP deve informar a recusa ao cliente
     Dado que estou na etapa de endereço de cobrança do checkout
     Quando eu informo a cidade "Cidade Inexistente" que não pertence ao CEP

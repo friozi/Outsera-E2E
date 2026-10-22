@@ -26,6 +26,7 @@ npm test                  # suíte completa (gera os relatórios em reports/)
 | `npm run test:checkout` | Só a Tarefa 2 (`@checkout`) |
 | `npm run test:smoke` | Só os fluxos críticos (`@smoke`) |
 | `npm run test:headed` | Mostra o navegador durante a execução |
+| `npm run allure:open` | Abre o relatório **Allure** (gerado ao final de cada `npm test`) |
 | `npm run report` | Abre o relatório HTML do Playwright |
 | `ALL_BROWSERS=true npm test` | Executa em Chromium, Firefox e WebKit |
 | `npx bddgen && npx playwright test --grep "@negativo"` | Filtra por qualquer tag |
@@ -72,7 +73,7 @@ O pipeline de CI fica na raiz do repositório, em [`.github/workflows/e2e-web.ym
 - **Massa de dados isolada.** Cada cenário cria o próprio cliente pela API (veja abaixo).
 - **Steps declarativos.** O Gherkin descreve o comportamento ("preencho o endereço com dados válidos") e não os cliques.
 - **Esquemas de Cenário** com tabelas de exemplos para cobrir variações negativas sem duplicar código.
-- **Tags** para executar partes da suíte: `@login`, `@checkout`, `@positivo`, `@negativo`, `@smoke` e `@seguranca`.
+- **Tags** para executar partes da suíte: `@login`, `@checkout`, `@positivo`, `@negativo`, `@smoke` e `@seguranca`. Os cenários que expõem defeitos têm `@bug-01`, `@bug-02` e `@bug-03`.
 
 ---
 
@@ -100,6 +101,7 @@ Cada execução gera:
 
 | Relatório | Caminho | Conteúdo |
 |---|---|---|
+| **Allure** | `reports/allure-report/` (`npm run allure:open`) | Painel com gráficos, histórico de retentativas e cada passo Gherkin com o **screenshot** dele. Organização por épico > funcionalidade > cenário, severidade (`@smoke` e `@seguranca` = crítico), categorias (*defeitos da aplicação* × *problemas de teste/ambiente*), ambiente da execução e link para o defeito nos cenários `@bug-NN` |
 | **Cucumber HTML** | `reports/cucumber/index.html` | Arquivo único com cada cenário em Gherkin e **um screenshot por passo** |
 | **Playwright HTML** | `reports/playwright/` (`npm run report`) | Passos, screenshots, **vídeo e trace** (linha do tempo navegável com DOM, rede e console) das falhas |
 | Cucumber JSON / JUnit | `reports/cucumber/report.json`, `junit.xml` | Para integrar com CI, Xray, Allure etc. |
