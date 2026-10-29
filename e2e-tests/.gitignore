@@ -3,3 +3,5 @@ node_modules/
 reports/
 test-results/
 .env
+allure-report/
+allure-results/

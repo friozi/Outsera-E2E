@@ -2,9 +2,9 @@ name: E2E web (Playwright + BDD)
 
 on:
   push:
-    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml']
+    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml', '.github/actions/publish-allure/**', '.github/pages/**']
   pull_request:
-    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml']
+    paths: ['e2e-tests/**', '.github/workflows/e2e-web.yml', '.github/actions/publish-allure/**', '.github/pages/**']
   workflow_dispatch:
 
 defaults:
@@ -32,3 +32,37 @@ jobs:
           name: relatorios-e2e-web
           path: e2e-tests/reports/
           retention-days: 14
+
+  publicar-relatorio:
+    # Publica o Allure no GitHub Pages a cada execução na main, mesmo com testes falhando
+    # (as falhas documentam os defeitos da aplicação). Requer Settings > Pages > branch gh-pages.
+    name: Publicar relatório no GitHub Pages
+    needs: e2e
+    if: ${{ !cancelled() && needs.e2e.result != 'skipped' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # As três suítes publicam no mesmo site: uma publicação por vez, sem cancelar as pendentes.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar resultados da execução
+        id: resultados
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: relatorios-e2e-web
+          path: artefato
+      - name: Publicar relatório Allure
+        if: ${{ steps.resultados.outcome == 'success' }}
+        uses: ./.github/actions/publish-allure
+        with:
+          results-dir: artefato/allure-results
+          folder: web
+          report-name: E2E web - Toolshop
+          github-token: ${{ secrets.GITHUB_TOKEN }}

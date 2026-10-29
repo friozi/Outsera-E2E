@@ -18,9 +18,26 @@ e defeitos encontrados na aplicação.
 O código da aplicação testada não faz parte deste repositório: os testes usam as versões
 hospedadas publicamente e os builds mobile oficiais (baixados por script).
 
+## Relatórios online
+
+Os relatórios Allure da última execução de cada suíte ficam publicados no GitHub Pages:
+
+**https://friozi.github.io/Outsera-E2E/**
+
+| Suíte | Relatório |
+|---|---|
+| E2E web | https://friozi.github.io/Outsera-E2E/web/ |
+| Mobile Android (BrowserStack) | https://friozi.github.io/Outsera-E2E/android/ |
+| Mobile iOS (simulador) | https://friozi.github.io/Outsera-E2E/ios/ |
+
+Cada workflow atualiza só a sua pasta do site, pela action
+[`publish-allure`](.github/actions/publish-allure/action.yml). Ela preserva o histórico das
+execuções anteriores, o que alimenta o gráfico de tendência do Allure, e registra o link da
+execução do Actions no relatório.
+
 ## Integração contínua (GitHub Actions)
 
-| Workflow | Execução | Relatórios (artefatos) |
+| Workflow | Execução | Relatórios (artefatos, além do GitHub Pages) |
 |---|---|---|
 | [`e2e-web.yml`](.github/workflows/e2e-web.yml) | Playwright/Chromium no Ubuntu | `relatorios-e2e-web`: Allure, Playwright e Cucumber |
 | [`mobile-android.yml`](.github/workflows/mobile-android.yml) | Android em **dispositivo real no BrowserStack** (runner Ubuntu) | `relatorio-allure-android` |

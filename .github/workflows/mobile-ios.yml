@@ -2,9 +2,9 @@ name: Mobile iOS (simulador)
 
 on:
   push:
-    paths: ['mobile-tests/**', '.github/workflows/mobile-ios.yml']
+    paths: ['mobile-tests/**', '.github/workflows/mobile-ios.yml', '.github/actions/publish-allure/**', '.github/pages/**']
   pull_request:
-    paths: ['mobile-tests/**', '.github/workflows/mobile-ios.yml']
+    paths: ['mobile-tests/**', '.github/workflows/mobile-ios.yml', '.github/actions/publish-allure/**', '.github/pages/**']
   workflow_dispatch:
 
 concurrency:
@@ -61,3 +61,37 @@ jobs:
             mobile-tests/allure-report/
             mobile-tests/allure-results/
           retention-days: 14
+
+  publicar-relatorio:
+    # Publica o Allure no GitHub Pages a cada execução na main, mesmo com testes falhando
+    # (as falhas documentam os defeitos da aplicação). Requer Settings > Pages > branch gh-pages.
+    name: Publicar relatório no GitHub Pages
+    needs: ios-simulator
+    if: ${{ !cancelled() && needs.ios-simulator.result != 'skipped' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # As três suítes publicam no mesmo site: uma publicação por vez, sem cancelar as pendentes.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar resultados da execução
+        id: resultados
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: relatorio-allure-ios
+          path: artefato
+      - name: Publicar relatório Allure
+        if: ${{ steps.resultados.outcome == 'success' }}
+        uses: ./.github/actions/publish-allure
+        with:
+          results-dir: artefato/allure-results
+          folder: ios
+          report-name: Mobile iOS - Toolshop (simulador)
+          github-token: ${{ secrets.GITHUB_TOKEN }}

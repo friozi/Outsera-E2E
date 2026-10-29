@@ -1,0 +1,72 @@
+name: Publicar relatório Allure no GitHub Pages
+description: >
+  Gera o relatório Allure com o histórico das execuções anteriores (gráfico de tendência) e o publica
+  em uma subpasta do site do GitHub Pages (branch gh-pages), sem apagar os relatórios das outras suítes.
+
+inputs:
+  results-dir:
+    description: Pasta com os allure-results da execução
+    required: true
+  folder:
+    description: Subpasta do site onde o relatório será publicado (ex.: web, android, ios)
+    required: true
+  report-name:
+    description: Título exibido no relatório
+    required: true
+  github-token:
+    description: Token com permissão de escrita no repositório (contents write)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Recuperar o site atual e o histórico do relatório anterior
+      shell: bash
+      run: |
+        # Parte do site já publicado para preservar os relatórios das outras suítes.
+        # A branch gh-pages ainda não existe na primeira publicação: nesse caso o site começa vazio.
+        mkdir -p .site
+        if git clone --quiet --depth 1 --branch gh-pages "https://github.com/${GITHUB_REPOSITORY}.git" .gh-pages-atual 2>/dev/null; then
+          rsync -a --exclude .git .gh-pages-atual/ .site/
+          if [ -d ".site/${{ inputs.folder }}/history" ]; then
+            cp -R ".site/${{ inputs.folder }}/history" "${{ inputs.results-dir }}/history"
+            echo "Histórico anterior recuperado."
+          fi
+        else
+          echo "Primeira publicação: sem site nem histórico anteriores."
+        fi
+        # Substitui somente a pasta desta suíte (sem acumular arquivos do relatório anterior).
+        rm -rf ".site/${{ inputs.folder }}"
+
+    - name: Registrar a execução do GitHub Actions no relatório
+      shell: bash
+      run: |
+        cat > "${{ inputs.results-dir }}/executor.json" <<JSON
+        {
+          "name": "GitHub Actions",
+          "type": "github",
+          "buildOrder": ${GITHUB_RUN_NUMBER},
+          "buildName": "${GITHUB_WORKFLOW} #${GITHUB_RUN_NUMBER}",
+          "buildUrl": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+          "reportName": "${{ inputs.report-name }}",
+          "reportUrl": "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/${{ inputs.folder }}/"
+        }
+        JSON
+
+    - name: Gerar relatório Allure
+      shell: bash
+      run: |
+        npx --yes allure-commandline@2.46.1 generate "${{ inputs.results-dir }}" --clean \
+          --report-name "${{ inputs.report-name }}" -o ".site/${{ inputs.folder }}"
+        cp .github/pages/index.html .site/index.html
+        touch .site/.nojekyll
+
+    - name: Publicar no GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ inputs.github-token }}
+        publish_branch: gh-pages
+        publish_dir: .site
+        # O site completo foi montado acima (outras suítes preservadas, esta substituída).
+        keep_files: false
+        commit_message: "Relatório ${{ inputs.folder }}: ${{ github.workflow }} #${{ github.run_number }}"

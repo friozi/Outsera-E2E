@@ -97,6 +97,8 @@ O `retries: 1` (2 no CI) fica só como proteção contra a rede. Um teste que pa
 
 ## Relatórios e evidências
 
+O relatório Allure da última execução na `main` fica publicado em **https://friozi.github.io/Outsera-E2E/web/**.
+
 Cada execução gera:
 
 | Relatório | Caminho | Conteúdo |
