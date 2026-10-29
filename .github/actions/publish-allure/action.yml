@@ -5,16 +5,16 @@ description: >
 
 inputs:
   results-dir:
-    description: Pasta com os allure-results da execução
+    description: "Pasta com os allure-results da execução"
     required: true
   folder:
-    description: Subpasta do site onde o relatório será publicado (ex.: web, android, ios)
+    description: "Subpasta do site onde o relatório será publicado (ex.: web, android, ios)"
     required: true
   report-name:
-    description: Título exibido no relatório
+    description: "Título exibido no relatório"
     required: true
   github-token:
-    description: Token com permissão de escrita no repositório (contents write)
+    description: "Token com permissão de escrita no repositório (contents write)"
     required: true
 
 runs:
