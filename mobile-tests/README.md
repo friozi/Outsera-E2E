@@ -97,13 +97,14 @@ O que a execução faz:
 
 ### GitHub Actions
 
-O workflow [`.github/workflows/mobile.yml`](../.github/workflows/mobile.yml) tem três jobs:
+Cada plataforma tem o próprio workflow. Assim uma pode ser reexecutada sem esperar a outra (o iOS é bem mais lento):
 
-| Job | Onde roda |
-|---|---|
-| Android | BrowserStack, dispositivo real (runner Ubuntu) |
-| iOS | Simulador no runner `macos-15`, escolhendo o iPhone e o iOS mais recentes da imagem |
-| Relatório | Junta os resultados das duas plataformas em **um único relatório Allure**, publicado como artefato `relatorio-allure-mobile` |
+| Workflow | Onde roda | Relatório (artefato) |
+|---|---|---|
+| [`mobile-android.yml`](../.github/workflows/mobile-android.yml) | BrowserStack, dispositivo real (runner Ubuntu). Antes de tudo, verifica se as credenciais existem e diz qual secret está faltando | `relatorio-allure-android` |
+| [`mobile-ios.yml`](../.github/workflows/mobile-ios.yml) | Simulador no runner `macos-15`, escolhendo o iPhone e o iOS mais recentes da imagem | `relatorio-allure-ios` |
+
+Para juntar as duas plataformas em um único relatório, rode `npm test` localmente. Em `allure-results/` também dá para juntar os resultados baixados dos dois artefatos e rodar `npm run allure:generate`.
 
 As credenciais do BrowserStack vêm dos *secrets* do repositório, `BROWSERSTACK_USERNAME` e `BROWSERSTACK_ACCESS_KEY` (*Settings → Secrets and variables → Actions*).
 

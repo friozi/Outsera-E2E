@@ -1,0 +1,54 @@
+name: Mobile Android (BrowserStack)
+
+on:
+  push:
+    paths: ['mobile-tests/**', '.github/workflows/mobile-android.yml']
+  pull_request:
+    paths: ['mobile-tests/**', '.github/workflows/mobile-android.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-android-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mobile-tests
+
+jobs:
+  android-browserstack:
+    name: Android (BrowserStack - dispositivo real)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+    steps:
+      - name: Verificar credenciais do BrowserStack
+        run: |
+          missing=()
+          [ -z "$BROWSERSTACK_USERNAME" ] && missing+=(BROWSERSTACK_USERNAME)
+          [ -z "$BROWSERSTACK_ACCESS_KEY" ] && missing+=(BROWSERSTACK_ACCESS_KEY)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error title=Credenciais do BrowserStack ausentes::Cadastre ${missing[*]} em Settings > Secrets and variables > Actions > Secrets (Repository secrets)."
+            exit 1
+          fi
+        working-directory: .
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile-tests/package-lock.json
+      - run: npm ci
+      - run: ./scripts/download-apps.sh android
+      - run: npm run test:browserstack:android
+      - name: Publicar relatório Allure (Android)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-allure-android
+          path: |
+            mobile-tests/allure-report/
+            mobile-tests/allure-results/
+          retention-days: 14
