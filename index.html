@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatórios de testes</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --text: #1d2330;
+      --muted: #5b6475;
+      --border: #e2e5ea;
+      --accent: #2f6fde;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #12151b;
+        --card: #1b1f27;
+        --text: #e7eaf0;
+        --muted: #9aa3b2;
+        --border: #2a303b;
+        --accent: #6a9cf5;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 880px; margin: 0 auto; padding: 48px 16px; }
+    h1 { margin: 0 0 8px; font-size: 1.75rem; }
+    p { margin: 0; color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 32px 0;
+    }
+    a.card {
+      display: block;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color .15s;
+    }
+    a.card:hover, a.card:focus-visible { border-color: var(--accent); }
+    .card strong { display: block; margin-bottom: 4px; font-size: 1.1rem; }
+    .card span { color: var(--muted); font-size: .95rem; }
+    .card em { display: block; margin-top: 12px; color: var(--accent); font-style: normal; font-size: .9rem; }
+    footer { font-size: .9rem; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Relatórios de testes automatizados</h1>
+    <p>Relatórios Allure da última execução no GitHub Actions, para a aplicação Toolshop (Practice Software Testing).</p>
+
+    <div class="grid">
+      <a class="card" href="web/">
+        <strong>E2E web</strong>
+        <span>Playwright + BDD (Gherkin em português): login, navegação e checkout.</span>
+        <em>Abrir relatório →</em>
+      </a>
+      <a class="card" href="android/">
+        <strong>Mobile Android</strong>
+        <span>Appium em dispositivo real no BrowserStack: login, navegação e formulário.</span>
+        <em>Abrir relatório →</em>
+      </a>
+      <a class="card" href="ios/">
+        <strong>Mobile iOS</strong>
+        <span>Appium em simulador no runner macOS: login, navegação e formulário.</span>
+        <em>Abrir relatório →</em>
+      </a>
+    </div>
+
+    <footer>
+      <p>Os cenários que expõem defeitos da aplicação falham de propósito. Detalhes no
+        <a href="https://github.com/friozi/Outsera-E2E">repositório</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>
